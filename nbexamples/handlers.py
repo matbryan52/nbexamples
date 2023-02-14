@@ -7,8 +7,11 @@ import json
 import glob
 import itertools
 import errno
-import pwd
-
+try:
+    import pwd
+except (ImportError, ModuleNotFoundError):
+    # Not available on Windows
+    pwd = None
 from tornado import web
 
 import nbformat
@@ -45,7 +48,12 @@ class Examples(LoggingConfigurable):
         categories = ['reviewed', 'unreviewed']
         dirs = [self.reviewed_example_dir, self.unreviewed_example_dir]
         all_examples = []
-        uid = os.getuid()
+        try:
+            uid = os.getuid()
+        except AttributeError:
+            # os.getuid not available on Windows
+            # this will by default block marking a file as owned
+            uid = -1
         for category, d in zip(categories, dirs):
             filepaths = glob.glob(os.path.join(d, '*.ipynb'))
             examples = [{'filepath': os.path.abspath(fp)} for fp in filepaths]
@@ -54,8 +62,8 @@ class Examples(LoggingConfigurable):
                 st = os.stat(example['filepath'])
                 try:
                     user = pwd.getpwuid(st.st_uid)
-                except KeyError:
-                    example['user'] = None
+                except (KeyError, AttributeError):
+                    example['user'] = 'Unknown'
                 else:
                     example['user'] = user.pw_gecos or user.pw_name
                 example['datetime'] = st.st_mtime
