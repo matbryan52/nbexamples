@@ -23,7 +23,7 @@ from traitlets.config import LoggingConfigurable
 
 class Examples(LoggingConfigurable):
     reviewed_example_dir = Unicode('', config=True, help='Directory of reviewed notebooks, relative to NotebookApp.notebook_dir')
-    unreviewed_example_dir = Unicode('', config=True, help='Directory of unreviewed notebooks, relative to NotebookApp.notebook_dir')
+    # unreviewed_example_dir = Unicode('', config=True, help='Directory of unreviewed notebooks, relative to NotebookApp.notebook_dir')
 
     def _reviewed_example_dir_default(self):
         return self.parent.notebook_dir
@@ -45,8 +45,8 @@ class Examples(LoggingConfigurable):
         return new_abs_fn
 
     def list_examples(self):
-        categories = ['reviewed', 'unreviewed']
-        dirs = [self.reviewed_example_dir, self.unreviewed_example_dir]
+        categories = ['reviewed']
+        dirs = [self.reviewed_example_dir]
         all_examples = []
         try:
             uid = os.getuid()
@@ -95,21 +95,21 @@ class Examples(LoggingConfigurable):
         # Return the possibly suffixed filename
         return os.path.split(abs_dest)[1]
 
-    def submit_example(self, user_filepath):
-        # Make a copy of the example notebook
-        src = os.path.join(self.parent.notebook_dir, user_filepath)
-        filename = os.path.basename(user_filepath)
-        dest = os.path.join(self.unreviewed_example_dir, filename)
-        try:
-            shutil.copyfile(src, dest)
-        except OSError as ex:
-            # python 2/3 compatibility permission error check
-            if ex.errno == errno.EACCES:
-                if os.path.exists(dest):
-                    raise web.HTTPError(401, 'Another user already shared a notebook with the name {}'.format(filename))
-                else:
-                    raise web.HTTPError(401, 'Could not write to the examples directory')
-        return dest
+    # def submit_example(self, user_filepath):
+    #     # Make a copy of the example notebook
+    #     src = os.path.join(self.parent.notebook_dir, user_filepath)
+    #     filename = os.path.basename(user_filepath)
+    #     dest = os.path.join(self.unreviewed_example_dir, filename)
+    #     try:
+    #         shutil.copyfile(src, dest)
+    #     except OSError as ex:
+    #         # python 2/3 compatibility permission error check
+    #         if ex.errno == errno.EACCES:
+    #             if os.path.exists(dest):
+    #                 raise web.HTTPError(401, 'Another user already shared a notebook with the name {}'.format(filename))
+    #             else:
+    #                 raise web.HTTPError(401, 'Could not write to the examples directory')
+    #     return dest
 
     def preview_example(self, filepath):
         fp = filepath  # for brevity
@@ -152,9 +152,9 @@ class ExampleActionHandler(BaseExampleHandler):
             dest = self.get_argument('dest')
             dest = self.manager.fetch_example(example_id, dest)
             self.redirect(ujoin(self.base_url, 'notebooks', dest))
-        elif action == 'submit':
-            dest = self.manager.submit_example(example_id)
-            self.redirect(ujoin(self.base_url, 'tree#examples' + dest))
+        # elif action == 'submit':
+        #     dest = self.manager.submit_example(example_id)
+        #     self.redirect(ujoin(self.base_url, 'tree#examples' + dest))
         elif action == 'delete':
             self.manager.delete_example(example_id)
             self.redirect(ujoin(self.base_url))
@@ -165,7 +165,7 @@ class ExampleActionHandler(BaseExampleHandler):
 # -----------------------------------------------------------------------------
 
 
-_example_action_regex = r"(?P<action>fetch|preview|submit|delete)"
+_example_action_regex = r"(?P<action>fetch|preview|delete)"
 
 default_handlers = [
     (r"/examples", ExamplesHandler),
