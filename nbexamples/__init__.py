@@ -13,11 +13,6 @@ def _jupyter_server_extension_paths():
 def _jupyter_nbextension_paths():
     """Returns frontend extension metadata to notebook 4.2+"""
     return [{
-        'section': 'notebook',
-        'src': 'static',
-        'dest': 'nbexamples',
-        'require': 'nbexamples/submit-example-button'
-    }, {
         'section': 'tree',
         'src': 'static',
         'dest': 'nbexamples',
